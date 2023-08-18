@@ -1,0 +1,17 @@
+# macOS-generated files
+.DS_Store
+.DS_Store?
+
+# Emacs backup files
+*~
+.*~
+
+# HDF5 data
+*.h5
+
+# Testing notebooks
+testing
+
+# Python/Jupyter
+.ipynb_checkpoints
+__pycache__
