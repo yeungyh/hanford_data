@@ -1,4 +1,4 @@
-# SIAM MPI23 Project "Model inversion for complex physical systems using low-dimensional surrogates"
+# Generation and Processing of Hanford Site Data
 
 ## Instructions
 
@@ -26,16 +26,16 @@
    eval "$(MINIFORGE3_INSTALL_DIR/bin/conda shell.bash hook)"
    ```
 	
-4. Create the `conda-forge` environment `pnnl_mpi23`:
+4. Create the `conda-forge` environment `hanford_data`:
 
    ```
    conda env create -f environment.yml
    ```
 	
-5. Activate the `pnnl_mpi23` environment
+5. Activate the `hanford_data` environment
 
    ```
-   conda activate pnnl_mpi23
+   conda activate hanford_data
    ```
 	
 6. Download the data file `mpi23_ens_data.h5` from the [Zenodo repository](https://zenodo.org/record/8027857) and place it on the `data` folder
@@ -45,9 +45,9 @@
    cd data; sha256sum -c SHA256SUMS; cd ..
    ```
 
-8. Launch JupyterLab and start!
+8. Run `data_generation.py`
    ```
-   jupyter lab
+   python3 data_generation
    ```
 	
 Checkout the notebook file [`notebooks/data_read_example.ipynb`](notebooks/data_read_example.ipynb) to see how to read the data and start working with it.
@@ -58,11 +58,16 @@ This file contains the following datasets:
 - `Nens`: Number of data pairs
 - `Nxi`: Number of terms of the Kosambi-Karhunen-Loève (KKL) expansion of the log-transmissivity field
 - `xi_ens`: `Nens` vectors of KKL coefficients
+- `yref`: The true log-transmissivity field minus its mean
+- `nyobs`: Number of y observation locations
+- `nyobs_set`: Number of sets of y observation locations.
+For conditional dataset, each set of y observation locations has a group `t[0-9]`. Each group has the following datasets:
+- `iyobs`: `nyobs` indices corresponding to the y observation locations.
 - `u_ens`: `Nens` vectors of discretized pressure fields
 - `ytms_ens`: `Nens` vectors of discretized log-transmissivity fields, corresponding to the entries of `xi_ens`, minus the true field's mean
 - `ytm`: The true log-transmissivity field's mean
-- `yref`: The true log-transmissivity field minus its mean
 - `ypred`, `Psi_y`: The KKL mean and matrix of coefficients
+For unconditional dataset, there is no group and all datasets are under the root. The above dataset except `iyobs` are under the root.
 
 The entries of `xi_ens` and `ytms_ens` are related by the KKL:
 ```
