@@ -4,10 +4,7 @@ from geom_mrst import GeomMRST
 
 class BCMRST(object):
 
-    def __init__(self,
-                 geom: GeomMRST,
-                 filename: str
-                ) -> None:
+    def __init__(self, geom: GeomMRST, filename: str ) -> None:
         num_ext_faces = geom.faces.num - geom.faces.num_interior
         self.kind = np.empty(num_ext_faces, dtype='<U1')
         self.init_val = np.zeros(num_ext_faces)
@@ -22,23 +19,13 @@ class BCMRST(object):
         self.val = np.copy(self.init_val)
         self.mean = {k : np.mean(self.init_val[self.kind == k]) for k in np.unique(self.kind)}
 
-    def randomize(self,
-                  kind: str,
-                  scale: float,
-                  rs=np.random.RandomState()
-                 ) -> None:
+    def randomize(self, kind: str, scale: float, rs=np.random.RandomState() ) -> None:
         self.val[self.kind == kind] = rs.normal(self.init_val[self.kind == kind], self.mean[kind] * scale)
     
-    def increment(self,
-                  kind: str,
-                  value: float
-                 ) -> None:
+    def increment(self, kind: str, value: float ) -> None:
         self.val[self.kind == kind] += value
         
-    def rescale(self,
-                kind: str,
-                scale: float
-               ) -> None:
+    def rescale(self, kind: str, scale: float ) -> None:
         exp_scale = np.exp(scale)
         self.val[self.kind == kind]      /= exp_scale
         self.init_val[self.kind == kind] /= exp_scale

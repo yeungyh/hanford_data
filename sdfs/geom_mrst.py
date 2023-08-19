@@ -1,21 +1,47 @@
 import numpy as np
 import h5py
+from dataclasses import dataclass
 from collections import namedtuple
 from matplotlib import patches as mpatches
 from matplotlib.collections import PatchCollection
 from matplotlib.axes import Axes
 from numpy.typing import ArrayLike, NDArray
 
-class GeomMRST(object):
+Nodes = namedtuple('Nodes', ['num', 'coords'])
+Cells = namedtuple('Cells', ['num', 'centroids', 'nodes', 'to_hf', 'volumes'])
 
-    def __init__(self,
-                 filename: str
-                ) -> None:
-        self.faces = namedtuple('faces', [
-                                'num', 'nodes', 'centroids', 'to_hf', 'areas', 'normals', 'neighbors', 'num_interior', 'int_ext'])
-        self.cells = namedtuple(
-            'cells', ['num', 'nodes', 'centroids', 'to_hf', 'volumes'])
-        self.nodes = namedtuple('nodes', ['num', 'coords'])
+@dataclass
+class NodesMRST:
+    num: int
+    coords: NDArray[np.float_]
+
+@dataclass
+class CellsMRST:
+    num: int
+    centroids: NDArray[np.float_]
+    nodes: NDArray[np.int_]
+    to_hf: NDArray[np.int_]
+    volumes: NDArray[np.float_]
+
+@dataclass
+class FacesMRST:
+    num: int
+    nodes: NDArray[np.int_]
+    centroids: NDArray[np.float_]
+    to_hf: NDArray[np.int_]
+    areas: NDArray[np.float_]
+    normals: NDArray[np.float_]
+    neighbors: NDArray[np.int_]
+    num_interior: int
+    int_ext: NDArray[np.int_]
+
+@dataclass(init=False)
+class GeomMRST:
+    nodes: NodesMRST
+    cells: CellsMRST
+    faces: FacesMRST
+
+    def __init__(self, filename: str) -> None:
 
         with h5py.File(filename, 'r') as f:
             self.faces.num = int(f.get('faces/num')[:].item())
@@ -54,15 +80,11 @@ class GeomMRST(object):
         polygons = self.nodes.coords.T[self.cells.nodes.T, :]
         return np.abs(np.sum(polygons[..., 0] * (np.roll(polygons[..., 1], 1, 1) - np.roll(polygons[..., 1], -1, 1)), axis=1)) / 2
 
-    def cellsContain(self,
-                     points: ArrayLike
-                    ) -> NDArray:
+    def cellsContain(self, points: NDArray) -> NDArray:
         polygons = self.nodes.coords.T[self.cells.nodes.T, :]
         return np.nonzero(np.all(np.cross(polygons - np.roll(polygons, 1, 1), points[:, None, None, :] - polygons[None, ...]) > 0, 2))[1]
 
-    def anyCellsWithin(self,
-                       polygons: ArrayLike
-                      ) -> NDArray:
+    def anyCellsWithin(self, polygons: NDArray) -> NDArray:
         cells = np.nonzero(np.all(np.cross(polygons - np.roll(polygons, 1, 1),
                                            self.cells.centroids.T[:, None, None, :] - polygons[None, ...]) > 0, 2))
         cands = cells[0][np.argsort(cells[1])].reshape((-1, 4))

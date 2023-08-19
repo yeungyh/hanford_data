@@ -7,10 +7,7 @@ from bc_mrst import BCMRST
 
 class TPFA(object):
 
-    def __init__(self,
-                 geom: GeomMRST,
-                 bc: BCMRST
-                ) -> None:
+    def __init__(self, geom: GeomMRST, bc: BCMRST) -> None:
         self.geom = geom
         self.bc = bc
 
@@ -49,9 +46,7 @@ class TPFA(object):
                                        (self.bc.kind == 'N') * self.bc.val,
                                        minlength=self.Nc)
 
-    def update_rhs(self,
-                   kind: str
-                  ) -> None:
+    def update_rhs(self, kind: str) -> None:
         if kind == 'D':
             self.rhs_dirichlet = np.bincount(self.boundary,
                                              self.alpha[2*self.Ni:] *
@@ -62,10 +57,7 @@ class TPFA(object):
                                            (self.bc.kind == 'N') * self.bc.val,
                                            minlength=self.Nc)
 
-    def ops(self,
-            K: npt.NDArray,
-            q: npt.NDArray | None = None
-           ) -> tuple[npt.NDArray, npt.NDArray]:
+    def ops(self, K: npt.NDArray, q: npt.NDArray | None = None) -> tuple[npt.NDArray, npt.NDArray]:
         self.Thf_interior = self.alpha[:2*self.Ni] * \
             K[self.geom.cells.to_hf[:2*self.Ni]]
         self.Tgf_interior = (lambda x: x.prod(axis=0) /
