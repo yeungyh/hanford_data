@@ -2,13 +2,9 @@ import numpy as np
 import numpy.typing as npt
 import h5py
 from dataclasses import dataclass
-from collections import namedtuple
 from matplotlib import patches as mpatches
 from matplotlib.collections import PatchCollection
 from matplotlib.axes import Axes
-
-Nodes = namedtuple('Nodes', ['num', 'coords'])
-Cells = namedtuple('Cells', ['num', 'centroids', 'nodes', 'to_hf', 'volumes'])
 
 @dataclass
 class Nodes:
