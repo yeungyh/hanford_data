@@ -1,97 +1,112 @@
 import numpy as np
+import numpy.typing as npt
 import h5py
 from dataclasses import dataclass
 from collections import namedtuple
 from matplotlib import patches as mpatches
 from matplotlib.collections import PatchCollection
 from matplotlib.axes import Axes
-from numpy.typing import ArrayLike, NDArray
 
 Nodes = namedtuple('Nodes', ['num', 'coords'])
 Cells = namedtuple('Cells', ['num', 'centroids', 'nodes', 'to_hf', 'volumes'])
 
 @dataclass
-class NodesMRST:
+class Nodes:
     num: int
-    coords: NDArray[np.float_]
+    coords: npt.NDArray[np.float_]
 
 @dataclass
-class CellsMRST:
+class Cells:
     num: int
-    centroids: NDArray[np.float_]
-    nodes: NDArray[np.int_]
-    to_hf: NDArray[np.int_]
-    volumes: NDArray[np.float_]
+    nodes: npt.NDArray[np.int_]
+    centroids: npt.NDArray[np.float_]
+    to_hf: npt.NDArray[np.int_]
+    volumes: npt.NDArray[np.float_]
 
 @dataclass
-class FacesMRST:
+class Faces:
     num: int
-    nodes: NDArray[np.int_]
-    centroids: NDArray[np.float_]
-    to_hf: NDArray[np.int_]
-    areas: NDArray[np.float_]
-    normals: NDArray[np.float_]
-    neighbors: NDArray[np.int_]
+    nodes: npt.NDArray[np.int_]
+    centroids: npt.NDArray[np.float_]
+    to_hf: npt.NDArray[np.int_]
+    areas: npt.NDArray[np.float_]
+    normals: npt.NDArray[np.float_]
+    neighbors: npt.NDArray[np.int_]
     num_interior: int
-    int_ext: NDArray[np.int_]
+    int_ext: npt.NDArray[np.int_]
 
-@dataclass(init=False)
 class GeomMRST:
-    nodes: NodesMRST
-    cells: CellsMRST
-    faces: FacesMRST
 
     def __init__(self, filename: str) -> None:
 
         with h5py.File(filename, 'r') as f:
-            self.faces.num = int(f.get('faces/num')[:].item())
-            self.faces.neighbors = f.get('faces/neighbors')[:].astype(int) - 1
+            faces_num = int(f.get('faces/num')[:].item())
+            faces_neighbors = f.get('faces/neighbors')[:].astype(int) - 1
 
-            is_interior = np.logical_and(*(self.faces.neighbors >= 0))
-            self.faces.num_interior = np.count_nonzero(is_interior)
-            self.faces.int_ext = np.argsort(~is_interior)
-            Ni_range = np.arange(self.faces.num_interior)
-            self.faces.to_hf = np.concatenate(
-                (Ni_range, Ni_range, np.arange(self.faces.num_interior, self.faces.num)))
+            is_interior = np.logical_and(*(faces_neighbors >= 0))
+            faces_num_interior = np.count_nonzero(is_interior)
+            faces_int_ext = np.argsort(~is_interior)
+            Ni_range = np.arange(faces_num_interior)
+            faces_to_hf = np.concatenate(
+                (Ni_range, Ni_range, np.arange(faces_num_interior, faces_num)))
 
-            self.faces.neighbors = self.faces.neighbors[:, self.faces.int_ext]
-            self.faces.nodes = (f.get(
-                'faces/nodes')[:].astype(int) - 1).reshape((2, -1), order='F')[:, self.faces.int_ext]
-            self.faces.centroids = f.get(
-                'faces/centroids')[:][:, self.faces.int_ext]
-            self.faces.areas = f.get(
-                'faces/areas')[:].ravel()[self.faces.int_ext]
-            self.faces.normals = f.get(
-                'faces/normals')[:][:, self.faces.int_ext]
-            self.faces.normals[:, self.faces.num_interior:] *= np.array(
-                [1, -1]).dot(self.faces.neighbors[:, self.faces.num_interior:] >= 0)
+            faces_neighbors = faces_neighbors[:, faces_int_ext]
+            faces_nodes = (f.get(
+                'faces/nodes')[:].astype(int) - 1).reshape((2, -1), order='F')[:, faces_int_ext]
+            faces_centroids = f.get(
+                'faces/centroids')[:][:, faces_int_ext]
+            faces_areas = f.get(
+                'faces/areas')[:].ravel()[faces_int_ext]
+            faces_normals = f.get(
+                'faces/normals')[:][:, faces_int_ext]
+            faces_normals[:, faces_num_interior:] *= np.array(
+                [1, -1]).dot(faces_neighbors[:, faces_num_interior:] >= 0)
+            
+            self.faces = Faces(faces_num,
+                               faces_nodes,
+                               faces_centroids,
+                               faces_to_hf,
+                               faces_areas,
+                               faces_normals,
+                               faces_neighbors,
+                               faces_num_interior,
+                               faces_int_ext)
 
-            self.cells.num = int(f.get('cells/num')[:].item())
-            self.cells.nodes = f.get('cells/nodes')[:].astype(int) - 1
-            self.cells.centroids = f.get('cells/centroids')[:]
-            self.cells.volumes = f.get('cells/volumes')[:]
-            self.cells.to_hf = np.concatenate((self.faces.neighbors[:, :self.faces.num_interior].ravel(),
-                                               self.faces.neighbors[:, self.faces.num_interior:].max(axis=0)))
+            cells_num = int(f.get('cells/num')[:].item())
+            cells_nodes = f.get('cells/nodes')[:].astype(int) - 1
+            cells_centroids = f.get('cells/centroids')[:]
+            cells_volumes = f.get('cells/volumes')[:]
+            cells_to_hf = np.concatenate((faces_neighbors[:, :faces_num_interior].ravel(),
+                                          faces_neighbors[:, faces_num_interior:].max(axis=0)))
+            
+            self.cells = Cells(cells_num,
+                               cells_nodes,
+                               cells_centroids,
+                               cells_to_hf,
+                               cells_volumes)
 
-            self.nodes.num = int(f.get('nodes/num')[:].item())
-            self.nodes.coords = f.get('nodes/coords')[:]
+            nodes_num = int(f.get('nodes/num')[:].item())
+            nodes_coords = f.get('nodes/coords')[:]
+
+            self.nodes = Nodes(nodes_num,
+                               nodes_coords)
 
     def areas(self):
         polygons = self.nodes.coords.T[self.cells.nodes.T, :]
         return np.abs(np.sum(polygons[..., 0] * (np.roll(polygons[..., 1], 1, 1) - np.roll(polygons[..., 1], -1, 1)), axis=1)) / 2
 
-    def cellsContain(self, points: NDArray) -> NDArray:
+    def cellsContain(self, points: npt.NDArray) -> npt.NDArray:
         polygons = self.nodes.coords.T[self.cells.nodes.T, :]
         return np.nonzero(np.all(np.cross(polygons - np.roll(polygons, 1, 1), points[:, None, None, :] - polygons[None, ...]) > 0, 2))[1]
 
-    def anyCellsWithin(self, polygons: NDArray) -> NDArray:
+    def anyCellsWithin(self, polygons: npt.NDArray) -> npt.NDArray:
         cells = np.nonzero(np.all(np.cross(polygons - np.roll(polygons, 1, 1),
                                            self.cells.centroids.T[:, None, None, :] - polygons[None, ...]) > 0, 2))
         cands = cells[0][np.argsort(cells[1])].reshape((-1, 4))
         return cands[np.arange(len(cands)), np.random.random_integers(0, 3, cands.shape[0])]
 
     
-def geom_plot(geom: GeomMRST, values: ArrayLike, ax: Axes):
+def geom_plot(geom: GeomMRST, values: npt.ArrayLike, ax: Axes):
 
     patches = [mpatches.Polygon(v, closed=True) for v in geom.nodes.coords.T[geom.cells.nodes.T, :]]
     
