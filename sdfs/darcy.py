@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.sparse.linalg as spl
 import scipy.sparse as sps
-from tpfa import TPFA
+from sdfs.tpfa import TPFA
 
 
 class DarcyExp(object):

@@ -6,4 +6,5 @@ dependencies:
   - gpy
   - jupyterlab
   - h5py
+  - tqdm
       

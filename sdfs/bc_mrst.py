@@ -1,6 +1,6 @@
 import numpy as np
 import h5py
-from geom_mrst import GeomMRST
+from sdfs.geom_mrst import GeomMRST
 
 class BCMRST(object):
 
