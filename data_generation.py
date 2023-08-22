@@ -13,11 +13,12 @@ from tqdm import trange
 
 parser = argparse.ArgumentParser(description='Dataset generation')
 parser.add_argument('--cond', action='store_true')
+parser.add_argument('--nyobs', type=int, choices=[10, 25, 50, 100, 200], default=100)
 args = parser.parse_args()
 conditional = args.cond
-print(f"Generating {'conditional' if conditional else 'unconditional'} data...")
+nyobs = args.nyobs
+print(f"Generating {'conditional' if conditional else 'unconditional'} data for Nyobs = {nyobs:d}...")
 
-nyobs = 100
 data_path = 'data/'
 geom_filename = data_path + f'geom_1x.mat'
 bc_filename = data_path + f'bc_1x.mat'
@@ -64,7 +65,7 @@ xi_ens   = rs.standard_normal((Nens, Nxi))
 ytms_ens = np.empty((Nens, Nc))
 u_ens    = np.empty((Nens, Nc))
 
-out_file = data_path + f"hanford_ens_data_{'cond' if conditional else 'uncond'}.h5"
+out_file = data_path + f"hanford_data_{nyobs:d}_{'cond' if conditional else 'uncond'}.h5"
 
 with h5py.File(out_file, 'w') as f:
     f.create_dataset('xi_ens', data=xi_ens)
