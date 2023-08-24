@@ -1,8 +1,8 @@
 import numpy as np
 import numpy.typing as npt
 import scipy.sparse as sps
-from geom_mrst import GeomMRST
-from bc_mrst import BCMRST
+from sdfs.geom_mrst import GeomMRST
+from sdfs.bc_mrst import BCMRST
 
 
 class TPFA(object):
