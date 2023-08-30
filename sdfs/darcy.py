@@ -10,7 +10,6 @@ class DarcyExp(object):
     def __init__(self,
                  tpfa: TPFA,
                  iuobs: npt.NDArray[np.int_],
-                 use_amps: bool,
                  ssv: npt.NDArray[np.int_] | None = None
                 ) -> None:
         self.tpfa = tpfa
