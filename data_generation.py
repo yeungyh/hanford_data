@@ -71,6 +71,7 @@ with h5py.File(out_file, 'w') as f:
     f.create_dataset('xi_ens', data=xi_ens)
     f.create_dataset('ytm', data=ytm)
     f.create_dataset('yref', data=yref)
+    f.create_dataset('uref', data=uref)
     f.create_dataset('Nens', data=Nens)
     f.create_dataset('Nxi', data=Nxi)
     if conditional:
