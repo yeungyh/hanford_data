@@ -25,7 +25,8 @@ class TPFA(object):
             self.geom.cells.centroids[:, self.geom.cells.to_hf]
         n = self.geom.faces.normals[:, self.geom.faces.to_hf]
         n[:, self.Ni:2*self.Ni] *= -1
-        self.alpha = np.sum(c * n, axis=0) / np.sum(c ** 2, axis=0)
+        self.alpha_interior, self.alpha_boundary = np.array_split(
+            np.sum(c * n, axis=0) / np.sum(c ** 2, axis=0), [2*self.Ni])
 
         self.cell_hfs = np.ascontiguousarray(np.argsort(
             self.geom.cells.to_hf).reshape(4, -1, order='F'))
@@ -35,11 +36,11 @@ class TPFA(object):
                                            self.cell_ihfs + self.Ni) % (2*self.Ni)],
                                        -1)
         self.alpha_dirichlet = np.bincount(self.boundary,
-                                           self.alpha[2*self.Ni:] *
+                                           self.alpha_boundary *
                                            (self.bc.kind == 'D'),
                                            minlength=self.Nc)
         self.rhs_dirichlet = np.bincount(self.boundary,
-                                         self.alpha[2*self.Ni:] *
+                                         self.alpha_boundary *
                                          (self.bc.kind == 'D') * self.bc.val,
                                          minlength=self.Nc)
         self.rhs_neumann = np.bincount(self.boundary,
@@ -49,7 +50,7 @@ class TPFA(object):
     def update_rhs(self, kind: str) -> None:
         if kind == 'D':
             self.rhs_dirichlet = np.bincount(self.boundary,
-                                             self.alpha[2*self.Ni:] *
+                                             self.alpha_boundary *
                                              (self.bc.kind == 'D') * self.bc.val,
                                              minlength=self.Nc)
         elif kind == 'N':
@@ -57,15 +58,31 @@ class TPFA(object):
                                            (self.bc.kind == 'N') * self.bc.val,
                                            minlength=self.Nc)
 
-    def ops(self, K: npt.NDArray, q: npt.NDArray | None = None) -> tuple[npt.NDArray, npt.NDArray]:
-        self.Thf_interior = self.alpha[:2*self.Ni] * \
-            K[self.geom.cells.to_hf[:2*self.Ni]]
-        self.Tgf_interior = (lambda x: x.prod(axis=0) /
-                             x.sum(axis=0))(self.Thf_interior.reshape((2, -1)))
-        diag = np.bincount(self.neighbors, np.concatenate(
-            (self.Tgf_interior, self.Tgf_interior)), minlength=self.Nc) + self.alpha_dirichlet * K
-        return sps.csc_matrix((np.concatenate((-self.Tgf_interior, -self.Tgf_interior, diag)), (self.rows, self.cols)), shape=(self.Nc, self.Nc)), \
-            self.rhs_dirichlet * K + (np.bincount(self.boundary[self.bc.kind == 'N'], q, minlength=self.Nc) if q is not None else self.rhs_neumann)
+    def randomize_bc(self, kind: str, scale: np.float_) -> None:
+        self.bc.randomize(kind, scale)
+        self.update_rhs(kind)
+    
+    def increment_bc(self, kind: str, value: np.float_) -> None:
+        self.bc.increment(kind, value)
+        self.update_rhs(kind)
 
-    def sens(self) -> npt.NDArray:
-        return np.append(self.alpha[:2*self.Ni] * ((np.tile(self.Tgf_interior, 2) / self.Thf_interior) ** 2), 0.0)[self.cell_ihfs]
+    def ops(self,
+            K: npt.NDArray[np.float_],
+            q: npt.NDArray[np.float_] | None = None
+           ) -> tuple[npt.NDArray[np.float_], npt.NDArray[np.float_]]:
+        self.K = K
+        self.Thf_interior = self.alpha_interior * K[self.geom.cells.to_hf[:2*self.Ni]]
+        self.Tgf_interior = (lambda x: x.prod(axis=0) / x.sum(axis=0))(self.Thf_interior.reshape((2, -1)))
+        diag = np.bincount(self.neighbors, np.concatenate((self.Tgf_interior, self.Tgf_interior)), minlength=self.Nc) + self.alpha_dirichlet * K
+        return sps.csc_matrix((np.concatenate((-self.Tgf_interior, -self.Tgf_interior, diag)), (self.rows, self.cols)), shape=(self.Nc, self.Nc)), \
+            self.rhs_dirichlet * K + (self.rhs_neumann if q is None else np.bincount(self.boundary[self.bc.kind == 'N'], q, minlength=self.Nc))
+
+    def sens(self,
+             K: npt.NDArray[np.float_]
+            ) -> npt.NDArray[np.float_]:
+        if self.K is not K:
+            print("update K")
+            self.K = K
+            self.Thf_interior = self.alpha_interior * K[self.geom.cells.to_hf[:2*self.Ni]]
+            self.Tgf_interior = (lambda x: x.prod(axis=0) / x.sum(axis=0))(self.Thf_interior.reshape((2, -1)))
+        return np.append(self.alpha_interior * ((np.tile(self.Tgf_interior, 2) / self.Thf_interior) ** 2), 0.0)[self.cell_ihfs]
