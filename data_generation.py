@@ -1,4 +1,3 @@
-from os import close
 import numpy as np
 import scipy as sp
 import h5py
