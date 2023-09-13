@@ -28,7 +28,7 @@ class Cells:
     num: int
     nodes: npt.NDArray[np.int_]
     centroids: npt.NDArray[np.float_]
-    to_hf: npt.NDArray[np.int_]
+    to_hf: npt.NDArray[np.generic]
     volumes: npt.NDArray[np.float_]
     polygons: npt.NDArray[np.float_]
 

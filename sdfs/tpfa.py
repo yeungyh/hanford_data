@@ -58,11 +58,11 @@ class TPFA(object):
                                            (self.bc.kind == 'N') * self.bc.val,
                                            minlength=self.Nc)
 
-    def randomize_bc(self, kind: str, scale: np.float_) -> None:
+    def randomize_bc(self, kind: str, scale: float) -> None:
         self.bc.randomize(kind, scale)
         self.update_rhs(kind)
     
-    def increment_bc(self, kind: str, value: np.float_) -> None:
+    def increment_bc(self, kind: str, value: float) -> None:
         self.bc.increment(kind, value)
         self.update_rhs(kind)
 
@@ -81,7 +81,6 @@ class TPFA(object):
              K: npt.NDArray[np.float_]
             ) -> npt.NDArray[np.float_]:
         if self.K is not K:
-            print("update K")
             self.K = K
             self.Thf_interior = self.alpha_interior * K[self.geom.cells.to_hf[:2*self.Ni]]
             self.Tgf_interior = (lambda x: x.prod(axis=0) / x.sum(axis=0))(self.Thf_interior.reshape((2, -1)))

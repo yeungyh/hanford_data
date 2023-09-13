@@ -30,11 +30,11 @@ class DarcyExp(object):
                                    shape=(self.Nc, Nq))
         self.Y = None
 
-    def randomize_bc(self, kind: str, scale: np.float_):
+    def randomize_bc(self, kind: str, scale: float):
         self.tpfa.randomize_bc(kind, scale)
         return self
 
-    def increment_bc(self, kind: str, value: np.float_):
+    def increment_bc(self, kind: str, value: float):
         self.tpfa.increment_bc(kind, value)
         return self
 
