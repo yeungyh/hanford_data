@@ -5,7 +5,7 @@ in LOCATION. These datasets contain 20,000 realizations of the log-hydraulic tra
 a two-dimensional stationary, saturated flow model of the Hanford Site, together with the
 corresponding hydraulic pressure fields.
 
-The low-hydraulic transmissivity fields are constructed by computing and sampling the
+The log-hydraulic transmissivity fields are constructed by computing and sampling the
 1,000-dimensional truncated Kosambi-Karhunen-Loève (KKL) expansion of a stationary Gaussian Process
 Regression (GPR)/Kriging model calibrated using `nyobs` spatially sparse observations of the
 reference log-hydraulic conductivity field.
@@ -34,6 +34,8 @@ python data_generation.py --nyobs 200
 
 The datasets are generated in HD5F format. All datasets have the following fields in the root:
 
+| Field       | Description                                                      |
+|-------------|------------------------------------------------------------------|
 | `Nens`      | Number of realizations (= 20,000)                                |
 | `Nxi`       | Number of Kosambi-Karhunen-Loève (KKL) expansion terms (= 1,000) |
 | `xi_ens`    | `Nens` vectors of KKL coefficients                               |
@@ -48,6 +50,8 @@ The datasets are generated in HD5F format. All datasets have the following field
 For unconditional datasets, the following fields are in the root, whereas for conditional datasets
 they are in groups named `t[0-nyobs_set]` (e.g., `t0`, `t1`, etc.):
 
+| Field            | Description                                                                                                                    |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------|
 | `iyobs`          | `nyobs` indices corresponding to the y observation locations                                                                   |
 | `u_ens`          | `Nens` vectors of discretized pressure fields                                                                                  |
 | `ytms_ens`       | `Nens` vectors of discretized log-transmissivity fields, corresponding to the entries of `xi_ens`, minus the true field's mean |
