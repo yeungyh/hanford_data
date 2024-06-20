@@ -82,3 +82,11 @@ with different values of `nyobs` (10, 25, 50, 100, and 200). Datasets created fr
 differ from the ones hosted in the data repository because of different machines generate random
 numbers using the same code. To create fully reproducible datasets beyond the ones provided we
 recommend you read `xi_ens` from one of the provided datasets and use it to create new data.
+
+## Mapping data to a regular grid
+
+The data is generated using the MRST-compatible geometry of quadrilaterals in
+`data/geom_1x.mat`. The data can be mapped (after resolving mapping ambiguities) to a 69-by-54
+regular grid by using the `map2grid` module. Please see the notebook file
+[`notebooks/map2grid_example.ipynb`](notebooks/map2grid_example.ipynb) for an example of how to do
+it.
